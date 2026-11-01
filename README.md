@@ -1,91 +1,83 @@
 # travelord
 
-Travelord is a simple library written in Typescript that provides functions for ranking points of interest along a path of travel.
-It offers both a library interface for programmatic use and a command-line interface (CLI) for easy integration into your projects.
+A small TypeScript library and CLI that ranks points of interest along a path of travel. Give it a start point, an end point and a list of coordinates, and it returns the points that lie roughly on the way, ordered by how soon you would reach them.
 
-This library is almost entirely written using ChatGPT. including this README!
+> Archived: no longer maintained. Kept for reference.
 
-## Features
+## Why
 
--   Rank points along a bearing line based on their distance and bearing difference.
--   Filter points based on a bearing difference threshold.
--   Sort points based on distance and bearing difference.
--   access to underlying functions
+In 2023 I wanted to plan a train trip across Europe that stopped at as many slacklining and highlining communities as possible, using community locations from [SlackMap](https://slackmap.com/communities). I needed a quick way to keep only the communities on the way and order them along the route.
 
-## Why?
+Most of the code and the original README were written with ChatGPT.
 
-I wanted to plan my travel by train across europe, hitting up as many slacklining/highlining communities along the way using data from SlackMap: https://slackmap.com/communities
+## How it works
 
-This tool is useful for anyone who needs to plan a route given a list of POIs that they would like to visit along the way.
+1. Compute the bearing and great-circle (haversine) distance from start to end.
+2. Drop points whose bearing from the start differs from the travel bearing by more than a threshold (default 45 degrees), or that are farther from the start than the destination is.
+3. Score the remaining points with a weighted sum of normalised distance from the start (weight 0.8) and bearing difference (weight 0.2), then sort by score in ascending order.
 
-## Documentation
-
-This library is super simple, all the functions contain JSDoc comments and are well typed.
+The helper functions (`calculateDistance`, `calculateBearing`, `calculateBearingDiff`, `filterPoints`, `sortPoints`, and others) are exported and documented with JSDoc.
 
 ## Installation
 
-To install Travelord, use pnpm, npm or yarn:
+Version 0.1.0 is on npm:
 
-`npm install travelord`
+```sh
+npm install travelord
+```
 
-## CLI Usage
+To use the latest code (0.1.1), build from source:
 
-`travelord --input data.json --output output.json`
+```sh
+pnpm install
+pnpm build
+node dist/cli.js --help
+```
 
-CLI Options
+## CLI usage
 
-    --start: The start coordinate in the format lat,lng.
-    --end: The end coordinate in the format lat,lng.
-    --input: The input JSON file containing the array of points.
-    --output: The output JSON file to save the sorted points (specify the input file to overwrite). If not provided, the output goes to STDOUT.
+```sh
+travelord --input points.json --start 48.85,2.35 --end 52.52,13.40 --output ranked.json
+```
 
-Use `travelord --help` to get a full description
+| Option | Description |
+| --- | --- |
+| `-i, --input <file>` | JSON array of points, each with `lat` and `lng` (required). Other fields are passed through unchanged. |
+| `-s, --start <lat,lng>` | Start coordinate (required) |
+| `-e, --end <lat,lng>` | End coordinate (required) |
+| `-dw, --distance-weight <n>` | Distance weight (default 0.8) |
+| `-bw, --bearing-weight <n>` | Bearing weight (default 0.2) |
+| `-t, --threshold <deg>` | Maximum bearing difference (default 45) |
+| `-o, --output <file>` | Output file. Without it, results go to stdout. |
 
-## Library Usage
+`test/data.json` contains sample input: anonymised points with only an id, name and coordinates.
 
-Here's an example of how to use My Package in your JavaScript/TypeScript code:
+## Library usage
 
-```javascript
+```ts
 import { rankPointsAlongBearing } from "travelord";
 
-// Define your start and end coordinates
 const start = { lat: 0, lng: 0 };
 const end = { lat: 10, lng: 10 };
-
-// Define an array of points
 const points = [
     { lat: 2, lng: 2 },
     { lat: 5, lng: 5 },
     { lat: 8, lng: 8 },
 ];
 
-// Rank the points along the bearing line
-const rankedPoints = rankPointsAlongBearing(start, end, points);
-
-console.log(rankedPoints);
+console.log(rankPointsAlongBearing(start, end, points));
 ```
 
-## Contributing
+## Tech stack
 
-Contributions are welcome! Please feel free to submit a PR or message me if you need help
+TypeScript, Node, Commander, Jest (ts-jest).
 
-## Publish Workflow
+## Development
 
--   bump versions in package.json and in cli.ts
--   add to CHANGELOG
--   push to master
--   create a tag and release in github
--   the publish workflow will then publish to npm
-
-## Possible improvements
-
--   fix lint precommit hook
--   improve the ranking algorithm or give it more options
--   add support for an iterative ranking process
--   validate the CLI input data
--   use a dictionary of coordinates and/or google api to accept city names instead of coordinates
--   add csv support
+```sh
+pnpm test
+```
 
 ## License
 
-This project is licensed under the MIT License. See LICENSE file.
+MIT. See [LICENSE](LICENSE).
